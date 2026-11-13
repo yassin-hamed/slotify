@@ -1,0 +1,29 @@
+{
+  "name": "slotify",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Appointment booking and scheduling platform",
+  "directories": {
+    "doc": "docs"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=@slotify/web",
+    "dev:api": "npm run start:dev --workspace=@slotify/api",
+    "build:web": "npm run build --workspace=@slotify/web",
+    "build:api": "npm run build --workspace=@slotify/api"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yassin-hamed/slotify.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yassin-hamed/slotify/issues"
+  },
+  "homepage": "https://github.com/yassin-hamed/slotify#readme"
+}
