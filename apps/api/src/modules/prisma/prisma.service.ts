@@ -4,7 +4,6 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 
 import { PrismaNeon } from '@prisma/adapter-neon';
 import { PrismaClient } from '../../generated/prisma/client.js';
-import { HealthIndicatorResult } from '@nestjs/terminus';
 
 @Injectable()
 export class PrismaService
