@@ -45,9 +45,12 @@ model Business {
   defaultSlotIntervalMinutes Int @default(30)
   defaultCapacity            Int @default(1)
 
-  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Restrict)
-  services Service[]
-  ownerId  String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  ownerId String
+
+  services                       Service[]
+  businessWorkingDays            BusinessWorkingDay[]
+  businessAvailabilityExceptions BusinessAvailabilityException[]
 
   disabled  Boolean   @default(false)
   deletedAt DateTime?
@@ -80,4 +83,87 @@ model Service {
   updatedAt DateTime @updatedAt
 
   @@index([businessId, name])
+}
+
+model BusinessWorkingDay {
+  id      String  @id @default(uuid())
+  weekday Weekday
+
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+
+  periods BusinessWorkingPeriod[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([businessId, weekday])
+}
+
+model BusinessWorkingPeriod {
+  id          String   @id @default(uuid())
+  startTime   DateTime @db.Time(0)
+  endTime     DateTime @db.Time(0)
+  endsNextDay Boolean  @default(false)
+
+  workingDay   BusinessWorkingDay @relation(fields: [workingDayId], references: [id], onDelete: Cascade)
+  workingDayId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workingDayId])
+}
+
+model BusinessAvailabilityException {
+  id         String                    @id @default(uuid())
+  date       DateTime                  @db.Date
+  type       AvailabilityExceptionType
+  changeMode AvailabilityChangeMode
+  reason     String?
+
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+
+  periods BusinessExceptionPeriod[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([businessId, date])
+}
+
+model BusinessExceptionPeriod {
+  id          String   @id @default(uuid())
+  startTime   DateTime @db.Time(0)
+  endTime     DateTime @db.Time(0)
+  endsNextDay Boolean  @default(false)
+
+  exception   BusinessAvailabilityException @relation(fields: [exceptionId], references: [id], onDelete: Cascade)
+  exceptionId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([exceptionId])
+}
+
+enum Weekday {
+  SATURDAY
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+}
+
+enum AvailabilityExceptionType {
+  CLOSED
+  CUSTOM_HOURS
+}
+
+enum AvailabilityChangeMode {
+  PLANNED
+  EMERGENCY
 }
