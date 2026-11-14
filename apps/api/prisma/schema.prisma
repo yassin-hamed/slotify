@@ -20,7 +20,6 @@ model User {
   businesses Business[]
 
   disabled  Boolean   @default(false)
-  deleted   Boolean   @default(false)
   deletedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -34,14 +33,24 @@ model Business {
   name        String
   slug        String  @unique
   description String?
+  tagline     String?
   phone       String?
   email       String?
   address     String?
   timezone    String  @default("Africa/Cairo")
   isActive    Boolean @default(true)
+  currency    String  @default("EGP")
 
-  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Restrict)
-  ownerId String
+  defaultDurationMinutes     Int @default(30)
+  defaultSlotIntervalMinutes Int @default(30)
+  defaultCapacity            Int @default(1)
+
+  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  services Service[]
+  ownerId  String
+
+  disabled  Boolean   @default(false)
+  deletedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -49,4 +58,26 @@ model Business {
   @@index([name])
   @@index([phone])
   @@index([ownerId])
+}
+
+model Service {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?
+  price       Decimal @db.Decimal(10, 2)
+
+  durationMinutes     Int?
+  slotIntervalMinutes Int?
+  capacity            Int?
+
+  isActive Boolean @default(true)
+
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  businessId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([businessId, name])
 }
