@@ -27,5 +27,11 @@
   "bugs": {
     "url": "https://github.com/yassin-hamed/slotify/issues"
   },
-  "homepage": "https://github.com/yassin-hamed/slotify#readme"
+  "homepage": "https://github.com/yassin-hamed/slotify#readme",
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "workerd@1.20261113.1": true,
+    "@prisma/engines@7.10.1": true,
+    "prisma@7.10.1": true
+  }
 }
