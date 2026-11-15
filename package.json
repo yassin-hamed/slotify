@@ -14,7 +14,7 @@
     "dev:web": "npm run dev --workspace=@slotify/web",
     "dev:api": "npm run start:dev --workspace=@slotify/api",
     "build:web": "npm run build --workspace=@slotify/web",
-    "build:api": "npm run build && npx prisma generate --workspace=@slotify/api",
+    "build:api": "npm run build --workspace=@slotify/api",
     "prod:api": "npm run start:prod --workspace=@slotify/api",
     "prod:web": "npm run start --workspace=@slotify/web"
   },
