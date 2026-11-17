@@ -22,6 +22,9 @@ model User {
   disabled  Boolean   @default(false)
   deletedAt DateTime?
 
+  bookingsCreated       Booking[]        @relation("BookingCreatedBy")
+  bookingHistoryActions BookingHistory[] @relation("BookingHistoryActor")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -48,6 +51,7 @@ model Business {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   ownerId String
 
+  bookings                       Booking[]
   services                       Service[]
   businessWorkingDays            BusinessWorkingDay[]
   businessAvailabilityExceptions BusinessAvailabilityException[]
@@ -76,12 +80,14 @@ model Service {
 
   isActive Boolean @default(true)
 
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  bookings   Booking[]
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Restrict)
   businessId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([id, businessId])
   @@index([businessId, name])
 }
 
@@ -148,6 +154,111 @@ model BusinessExceptionPeriod {
   @@index([exceptionId])
 }
 
+model Booking {
+  id            String @id @default(uuid())
+  bookingNumber String @unique
+
+  // Customer information
+  customerName  String
+  customerEmail String
+  customerPhone String
+
+  // Booking ownership
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  businessId String
+
+  service   Service @relation(fields: [serviceId, businessId], references: [id, businessId], onDelete: Restrict)
+  serviceId String
+
+  // Service snapshots at booking time
+  serviceNameSnapshot     String
+  servicePriceSnapshot    Decimal @db.Decimal(10, 2)
+  serviceDurationSnapshot Int
+  currencySnapshot        String
+
+  // Appointment time (UTC)
+  startAt DateTime @db.Timestamptz(3)
+  endAt   DateTime @db.Timestamptz(3)
+
+  // Status
+  status BookingStatus @default(CONFIRMED)
+
+  // Cancellation
+  cancellationReason String?
+  cancelledAt        DateTime? @db.Timestamptz(3)
+
+  // Booking source
+  source BookingSource @default(CUSTOMER)
+
+  createdByUser   User?   @relation("BookingCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdByUserId String?
+
+  // Related records
+  history    BookingHistory[]
+  accessOtps BookingAccessOtp[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([businessId, startAt])
+  @@index([serviceId, startAt])
+  @@index([customerEmail])
+  @@index([status, startAt])
+}
+
+model BookingHistory {
+  id String @id @default(uuid())
+
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  bookingId String
+
+  action    BookingHistoryAction
+  actorType BookingHistoryActorType
+
+  actorUser   User?   @relation("BookingHistoryActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  actorUserId String?
+
+  // Previous appointment time
+  previousStartAt DateTime? @db.Timestamptz(3)
+  previousEndAt   DateTime? @db.Timestamptz(3)
+
+  // New appointment time
+  newStartAt DateTime? @db.Timestamptz(3)
+  newEndAt   DateTime? @db.Timestamptz(3)
+
+  // Status transition
+  previousStatus BookingStatus?
+  newStatus      BookingStatus?
+
+  reason String?
+
+  createdAt DateTime @default(now())
+
+  @@index([bookingId, createdAt])
+  @@index([actorUserId])
+}
+
+model BookingAccessOtp {
+  id String @id @default(uuid())
+
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  bookingId String
+
+  // Never store the OTP itself
+  codeHash String
+
+  expiresAt     DateTime  @db.Timestamptz(3)
+  consumedAt    DateTime? @db.Timestamptz(3)
+  invalidatedAt DateTime? @db.Timestamptz(3)
+
+  attempts Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([bookingId, createdAt])
+  @@index([expiresAt])
+}
+
 enum Weekday {
   SATURDAY
   SUNDAY
@@ -166,4 +277,30 @@ enum AvailabilityExceptionType {
 enum AvailabilityChangeMode {
   PLANNED
   EMERGENCY
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum BookingSource {
+  CUSTOMER
+  BUSINESS_OWNER
+}
+
+enum BookingHistoryActorType {
+  CUSTOMER
+  BUSINESS_OWNER
+  SYSTEM
+}
+
+enum BookingHistoryAction {
+  CREATED
+  RESCHEDULED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
 }
