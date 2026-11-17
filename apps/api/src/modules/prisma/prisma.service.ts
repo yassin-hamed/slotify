@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import { ConfigService } from '@nestjs/config';
 
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 
@@ -10,12 +10,8 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  constructor() {
-    const connectionString = process.env.DATABASE_URL;
-
-    if (!connectionString) {
-      throw new Error('DATABASE_URL is not configured');
-    }
+  constructor(configService: ConfigService) {
+    const connectionString = configService.getOrThrow<string>('DATABASE_URL');
 
     const adapter = new PrismaNeon({
       connectionString,
